@@ -1,4 +1,5 @@
-﻿  Source.cpp
+﻿C:\Program Files (x86)\MSBuild\Microsoft.Cpp\v4.0\V140\Microsoft.CppClean.targets(76,5): warning : Access to the path 'c:\users\alexander\documents\csun\comp465\opengl\ruber465\debug\ruber465.exe' is denied.
+  Source.cpp
   GLM: GLM_MESSAGES is deprecated, use GLM_FORCE_MESSAGES instead
   GLM: Windows platform detected
   GLM: version 0.9.8.5
@@ -19,5 +20,4 @@
   GLM: GLM_GTX_norm extension included
   GLM: GLM_GTX_quaternion extension included
 c:\users\alexander\documents\csun\comp465\opengl\ruber465\source.cpp(357): warning C4552: '-': operator has no effect; expected operator with side-effect
-  ruber465.vcxproj -> C:\Users\Alexander\Documents\CSUN\Comp465\OpenGL\ruber465\Debug\ruber465.exe
-  ruber465.vcxproj -> C:\Users\Alexander\Documents\CSUN\Comp465\OpenGL\ruber465\Debug\ruber465.pdb (Partial PDB)
+LINK : fatal error LNK1104: cannot open file 'C:\Users\Alexander\Documents\CSUN\Comp465\OpenGL\ruber465\Debug\ruber465.exe'

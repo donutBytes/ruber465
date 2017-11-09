@@ -41,21 +41,21 @@ char* modelFile[totalModels] = {
 	"unum.tri",
 	"duo.tri",
 	"primus.tri",
-	"secundus.tri",
+	"secendus.tri",
 	"warbird.tri",
 	"missile.tri",
 	"missile.tri"
 };
 
 int vertexCount[totalModels]{
-	264 * 3,	//ruber
+	312 * 3,	//ruber
 	312 * 3,	//unum
 	264 * 3,	//duo
-	264 * 3,	//primus
+	1104 * 3,	//primus
 	264 * 3,	//secundus
-	2568 * 3,	//warbird
-	282 * 3,	//ship missile
-	282 * 3		//ship missile
+	617 * 3,	//warbird
+	927 * 3,	//ship missile
+	927 * 3		//ship missile
 };
 
 float modelBR[totalModels];
@@ -510,6 +510,7 @@ void keyboard(unsigned char key, int x, int y) {
 }
 
 int main(int argc, char** argv) {
+	printf("123");
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);	//Configure glut options
 	glutInitWindowSize(1024, 800);
