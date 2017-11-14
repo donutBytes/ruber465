@@ -48,8 +48,8 @@ char* modelFile[totalModels] = {
 };
 
 int vertexCount[totalModels]{
-	312 * 3,	//ruber
-	312 * 3,	//unum
+	264 * 3,	//ruber
+	264 * 3,	//unum
 	264 * 3,	//duo
 	1104 * 3,	//primus
 	264 * 3,	//secundus
