@@ -182,7 +182,7 @@ GLuint textVAO;
 
 //Variables that reference texture information in the vertex and fragment shader programs
 GLuint texturePosition;
-GLuint vTextCoord;
+GLuint vertexTextCoord;
 GLuint isTexture;
 GLuint texture;
 GLuint Texture;
@@ -346,7 +346,11 @@ void init() {
 	//set up vertex arrays
 	texturePosition = glGetAttribLocation(shaderProgram, "vPosition");
 	glVertexAttribPointer(texturePosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-	glEnableVertexAttribArray(vTextCoord);
+	glEnableVertexAttribArray(vertexTextCoord);
+
+	vertexTextCoord = glGetAttribLocation(shaderProgram, "vTextCoord");
+	glVertexAttribPointer(vertexTextCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(squareVertices)));
+	glEnableVertexAttribArray(vertexTextCoord);
 
 	//Set initial texture indicator to false
 	//This variable indicates when the texture is being drawn
@@ -510,7 +514,6 @@ void keyboard(unsigned char key, int x, int y) {
 }
 
 int main(int argc, char** argv) {
-	printf("123");
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);	//Configure glut options
 	glutInitWindowSize(1024, 800);
