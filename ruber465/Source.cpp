@@ -90,7 +90,7 @@ float rotationAmount[totalModels] = {
 	0.002f,			//Duo
 	0.002f,			//Primus
 	0.004f,			//Secundus
-	0.0f,			//Warbird
+	0.2f,			//Warbird
 	0.0f,			//Missile
 	0.0f			//Missile
 };
@@ -112,7 +112,7 @@ GLuint vNormal[totalModels];
 glm::mat4 modelMatrix[totalModels];		//set in display()
 glm::mat4 viewMatrix;
 glm::mat4 projectionMatrix;				//set in reshape()
-glm::mat4 modelViewProjectionMatrix;	//set in display()
+glm::mat4 ModelViewProjectionMatrix;	//set in display()
 
 										//Camera
 
@@ -133,8 +133,8 @@ glm::vec3 topVector(1.0f, 0.0f, 0.0f);
 glm::vec3 shipPosition;
 glm::vec3 shipCamEyePosition(0, 200, 500);
 glm::vec3 planetCamEyePosition(0, 0.0f, -8000);
-glm::vec3 topCamEyePosition(0, 20000.0f, 0);
-glm::vec3 frontCamEyePosition(0.0f, 10000.0f, 20000.0f);
+glm::vec3 topCamEyePosition(0, 2000.0f, 0);
+glm::vec3 frontCamEyePosition(0.0f, 1000.0f, 2000.0f);
 glm::vec3 camPosition;
 
 
@@ -190,7 +190,7 @@ GLuint NormalMatrix;
 GLuint ModelViewMatrix;
 glm::mat3 normalMatrix;
 glm::mat4 modelViewMatrix;
-//glm::mat4 modelViewProjectionMatrix;
+glm::mat4 modelViewProjectionMatrix;
 
 //Light Variables
 GLuint Ruber;
@@ -346,7 +346,7 @@ void init() {
 	//set up vertex arrays
 	texturePosition = glGetAttribLocation(shaderProgram, "vPosition");
 	glVertexAttribPointer(texturePosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-	glEnableVertexAttribArray(vertexTextCoord);
+	glEnableVertexAttribArray(texturePosition);
 
 	vertexTextCoord = glGetAttribLocation(shaderProgram, "vTextCoord");
 	glVertexAttribPointer(vertexTextCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(squareVertices)));
@@ -380,16 +380,18 @@ void display() {
 			transformMatrix[i] = obj3D[i]->getOrientationMatrix();
 			//Update Unum's camera
 			unumCamera = glm::lookAt(getPosition(glm::translate(transformMatrix[i], planetCamEyePosition)), getPosition(transformMatrix[i]), upVector);
-			if (currentCamera == UNUMCAMERAINDEX)
+			if (currentCamera == UNUMCAMERAINDEX) {
 				mainCamera = unumCamera;
+			}
 			break;
 
 		case DUOINDEX:
 			transformMatrix[i] = obj3D[i]->getOrientationMatrix();
 			//Update Duo's camera
 			duoCamera = glm::lookAt(getPosition(glm::translate(transformMatrix[i], planetCamEyePosition)), getPosition(obj3D[i]->getOrientationMatrix()), upVector);
-			if (currentCamera == DUOCAMERAINDEX)
+			if (currentCamera == DUOCAMERAINDEX) {
 				mainCamera = duoCamera;
+			}
 			break;
 		case PRIMUSINDEX: //If it's Primus, one of the moons, orbit around the planet Duo
 			transformMatrix[i] = transformMatrix[DUOINDEX] * obj3D[i]->getRotationMatrix() * glm::translate(identityMatrix, (translatePosition[SECUNDUSINDEX] - translatePosition[DUOINDEX]));
@@ -484,7 +486,7 @@ void switchCamera(int camera) {
 }
 
 void update(int i) {
-	glutTimerFunc(timeQuantum[timeQuantumState], update, 1);
+	glutTimerFunc(timeQuantum[timeQuantumState], update, 5);
 
 	//update all of the 
 	for (int i = 0; i < totalModels; i++)
@@ -498,13 +500,11 @@ void update(int i) {
 
 void keyboard(unsigned char key, int x, int y) {
 	switch (key) {
-	case 'v':
-	case 'V':
+	case 'v': case 'V':
 		currentCamera = (currentCamera + 1) % maxCameras;
 		switchCamera(currentCamera);
 		break;
-	case 'x':
-	case 'X':
+	case 'x': case 'X':
 		if (currentCamera == 0)
 			currentCamera = 5;
 		currentCamera = (currentCamera - 1) % maxCameras;
@@ -517,6 +517,10 @@ int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);	//Configure glut options
 	glutInitWindowSize(1024, 800);
+	glutInitContextVersion(3, 3);
+	glutInitContextProfile(GLUT_CORE_PROFILE);
+
+	//testing
 	glutInitContextVersion(3, 3);
 	glutInitContextProfile(GLUT_CORE_PROFILE);
 
@@ -534,7 +538,7 @@ int main(int argc, char** argv) {
 	glutKeyboardFunc(keyboard);
 
 	glutIdleFunc(NULL);
-	glutTimerFunc(timeQuantum[timeQuantumState], update, 5);
+	glutTimerFunc(timeQuantum[timeQuantumState], update, 1);
 
 	glutMainLoop(); //This call passes control to enter GLUT event processing cycle
 
