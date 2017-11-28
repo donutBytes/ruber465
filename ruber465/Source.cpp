@@ -74,14 +74,14 @@ float modelSize[totalModels] = {
 glm::vec3 scale[totalModels];
 glm::mat4 translationMatrix[totalModels];
 glm::vec3 translatePosition[totalModels] = {
-	glm::vec3(0, 0, 0),		    //ruber
-	glm::vec3(4000, -50, 0),    //unum 
-	glm::vec3(9000, 0 , 0),		//duo
-	glm::vec3(8100, 0, 0),		//primus
-	glm::vec3(7250, 0, 0),		//secundus
-	glm::vec3(5000, 1000, 5000),//warbird
-	glm::vec3(0, 0, 0),			//missile
-	glm::vec3(0, 0, 0)			//missile
+	glm::vec3(0, 0, 0),				//ruber
+	glm::vec3(4000, 0, 0),			//unum 
+	glm::vec3(9000, 0 , 0),			//duo
+	glm::vec3(11000, 0, 0),			//primus
+	glm::vec3(13000, 0, 0),			//secundus
+	glm::vec3(15000, 1000, 5000),	//warbird
+	glm::vec3(14500, 0, 0),			//missile
+	glm::vec3(14500, 0, 0)			//missile
 };
 
 float rotationAmount[totalModels] = {
@@ -90,7 +90,7 @@ float rotationAmount[totalModels] = {
 	0.002f,			//Duo
 	0.002f,			//Primus
 	0.004f,			//Secundus
-	0.2f,			//Warbird
+	0.0f,			//Warbird
 	0.0f,			//Missile
 	0.0f			//Missile
 };
@@ -129,13 +129,15 @@ glm::mat4 unumCamera;
 glm::mat4 duoCamera;
 
 glm::vec3 upVector(0.0f, 1.0f, 0.0f);
-glm::vec3 topVector(1.0f, 0.0f, 0.0f);
+glm::vec3 topVector(0.0f, 0.0f, -1.0f);
+
 glm::vec3 shipPosition;
-glm::vec3 shipCamEyePosition(0, 200, 500);
-glm::vec3 planetCamEyePosition(0, 0.0f, -8000);
-glm::vec3 topCamEyePosition(0, 2000.0f, 0);
-glm::vec3 frontCamEyePosition(0.0f, 1000.0f, 2000.0f);
 glm::vec3 camPosition;
+
+glm::vec3 frontCamEyePosition(0.0f, 10000.0f, 20000.0f);
+glm::vec3 topCamEyePosition(0, 20000.0f, 0);
+glm::vec3 shipCamEyePosition(0, 3000, 1000);
+glm::vec3 planetCamEyePosition(-4000, 0, -4000);
 
 
 //Planet rotational variables
@@ -274,31 +276,31 @@ void init() {
 
 	frontCamera = glm::lookAt(
 		frontCamEyePosition,
-		translatePosition[RUBERINDEX],
+		glm::vec3(0,0,0),
 		upVector
 	);
 
 	topCamera = glm::lookAt(
 		topCamEyePosition,
-		translatePosition[RUBERINDEX],
+		glm::vec3(0,0,0),
 		topVector
+	);
+
+	shipCamera = glm::lookAt(
+		shipCamEyePosition,
+		glm::vec3(0,300,0),
+		upVector
 	);
 
 	unumCamera = glm::lookAt(
 		planetCamEyePosition,
-		translatePosition[UNUMINDEX],
+		glm::vec3(0, 0, 0),
 		upVector
 	);
 
 	duoCamera = glm::lookAt(
 		planetCamEyePosition,
-		translatePosition[DUOINDEX],
-		upVector
-	);
-
-	shipCamera = glm::lookAt(
-		shipCamEyePosition,
-		translatePosition[SHIPINDEX],
+		glm::vec3(0, 0, 0),
 		upVector
 	);
 
@@ -374,24 +376,29 @@ void reshape(int width, int height) {
 void display() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//Actually clears the window to color specified in glClearColor()
 														//associate shader variables with vertex arrayshere
+	
+	mainCamera = frontCamera;
+
 	for (int i = 0; i < totalModels; i++) {
 		switch (i) {
 		case UNUMINDEX:
 			transformMatrix[i] = obj3D[i]->getOrientationMatrix();
+			/*
 			//Update Unum's camera
 			unumCamera = glm::lookAt(getPosition(glm::translate(transformMatrix[i], planetCamEyePosition)), getPosition(transformMatrix[i]), upVector);
 			if (currentCamera == UNUMCAMERAINDEX) {
 				mainCamera = unumCamera;
-			}
+			}*/
 			break;
-
+			
 		case DUOINDEX:
 			transformMatrix[i] = obj3D[i]->getOrientationMatrix();
+			/*
 			//Update Duo's camera
 			duoCamera = glm::lookAt(getPosition(glm::translate(transformMatrix[i], planetCamEyePosition)), getPosition(obj3D[i]->getOrientationMatrix()), upVector);
 			if (currentCamera == DUOCAMERAINDEX) {
 				mainCamera = duoCamera;
-			}
+			}*/
 			break;
 		case PRIMUSINDEX: //If it's Primus, one of the moons, orbit around the planet Duo
 			transformMatrix[i] = transformMatrix[DUOINDEX] * obj3D[i]->getRotationMatrix() * glm::translate(identityMatrix, (translatePosition[SECUNDUSINDEX] - translatePosition[DUOINDEX]));
@@ -417,6 +424,7 @@ void display() {
 
 		viewMatrix = mainCamera;
 		modelViewProjectionMatrix = projectionMatrix * viewMatrix * obj3D[i]->getModelMatrix();
+		
 		glUniformMatrix3fv(MVP, 1, GL_FALSE, glm::value_ptr(modelViewProjectionMatrix));
 		modelViewMatrix = viewMatrix * obj3D[i]->getModelMatrix();
 		normalMatrix = glm::mat3(modelViewMatrix);
@@ -516,7 +524,7 @@ void keyboard(unsigned char key, int x, int y) {
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);	//Configure glut options
-	glutInitWindowSize(1024, 800);
+	glutInitWindowSize(800, 600);
 	glutInitContextVersion(3, 3);
 	glutInitContextProfile(GLUT_CORE_PROFILE);
 
