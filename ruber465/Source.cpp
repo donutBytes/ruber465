@@ -91,14 +91,66 @@ glm::vec3 translatePosition[totalModels] = {
 };
 
 glm::mat4 modelMatrix[totalModels];		//set in display()
-glm::mat4 viewMatrix;
+glm::mat4 viewMatrix;					//set in init()
 glm::mat4 projectionMatrix;				//set in reshape()
 glm::mat4 ModelViewProjectionMatrix;	//set in display()
 
+// Cameras
+const int totalCameras = 2;
+
+char* cameraNames[totalCameras] = { "Front Camera", "Top Camera" };
+
+int currentCamera = 0;
+
+glm::mat4 frontCamera = glm::lookAt(
+	glm::vec3(0.0f, 10000.0f, 20000.0f),
+	glm::vec3(0.0f, 0.0f, 0.0f),
+	glm::vec3(0.0f, 1.0f, 0.0f));
+
+glm::mat4 topCamera = glm::lookAt(
+	glm::vec3(0, 20000.0f, 0),
+	glm::vec3(0.0f, 0.0f, 0.0f),
+	glm::vec3(0.0f, 0.0f, -1.0f));;
+
+glm::mat4 cameras[totalCameras] =
+{
+	frontCamera,
+	topCamera
+};
+
 // window title strings
 char baseStr[50] = "Ruber: ";
-char viewStr[15] = "Front View";
+char viewStr[15] = "Front Camera";
 char titleStr[100];
+
+/* init */
+
+void init() {
+	//Load shader programs
+	shaderProgram = loadShaders(vertexShaderFile, fragmentShaderFile);
+	glUseProgram(shaderProgram);
+
+	//Generate VAOs and VBOs
+	glGenVertexArrays(totalModels, VAO);
+	glGenBuffers(totalModels, buffer);
+
+	//Load the buffers from the model files
+	for (int i = 0; i < totalModels; i++) {
+		modelBR[i] = loadModelBuffer(modelFile[i], vertexCount[i], VAO[i], buffer[i], shaderProgram,
+			vPosition[i], vColor[i], vNormal[i], "vPosition", "vColor", "vNormal");
+
+		//set scale for models given bounding radius
+		scale[i] = glm::vec3(modelSize[i] / modelBR[i]);
+	}
+
+	MVP = glGetUniformLocation(shaderProgram, "ModelViewProjection");
+
+	viewMatrix = cameras[currentCamera];
+
+	//set render state values
+	glEnable(GL_DEPTH_TEST);
+	glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
+}
 
 void reshape(int width, int height) {
 	float aspectRatio = (GLfloat)width / (GLfloat)height;
@@ -110,4 +162,64 @@ void reshape(int width, int height) {
 		FOVY, width, height, aspectRatio);
 }
 
+void keyboard(unsigned char key, int x, int y) {
+	switch (key)
+	{
+		case 033: case 'q':  case 'Q': exit(EXIT_SUCCESS); break;
+
+		case 'v': case 'V':
+			currentCamera = ((currentCamera + 1) % totalCameras);
+			strcpy(viewStr, cameraNames[currentCamera]);
+			break;
+
+		case 'x': case 'X':
+			currentCamera = ((currentCamera - 1) % totalCameras);
+			strcpy(viewStr, cameraNames[currentCamera]);
+			break;
+	}
+
+	updateTitle();
 }
+
+// update and display animation state in window title
+void updateTitle() {
+	strcpy(titleStr, baseStr);
+	strcat(titleStr, viewStr);
+	// printf("title string = %s \n", titleStr);
+	glutSetWindowTitle(titleStr);
+}
+
+/* display */
+
+void display() {
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//Actually clears the window to color specified in glClearColor()
+														//associate shader variables with vertex arrayshere
+
+	for (int i = 0; i < totalModels; i++)
+	{
+		modelMatrix[i] = glm::translate(glm::mat4(), translatePosition[i]) * glm::scale(glm::mat4(), glm::vec3(scale[i]));
+		ModelViewProjectionMatrix = projectionMatrix * viewMatrix * modelMatrix[i];
+		glUniformMatrix4fv(MVP, 1, GL_FALSE, glm::value_ptr(ModelViewProjectionMatrix));
+		glBindVertexArray(VAO[i]);
+		glDrawArrays(GL_TRIANGLES, 0, vertexCount[i]);
+	}
+	
+	glutSwapBuffers();
+}
+
+/* update */
+
+void update(int i) {
+
+	glutTimerFunc(5, update, 1);
+
+	// Update all of the object3D's
+	for (int index = 0; index < totalModels; index++)
+	{
+		
+	}
+
+	glutPostRedisplay();
+}
+
+/* main */
