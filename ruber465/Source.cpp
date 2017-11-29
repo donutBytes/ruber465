@@ -128,7 +128,7 @@ glm::mat4 shipCamera;
 glm::mat4 unumCamera;
 glm::mat4 duoCamera;
 
-glm::vec3 upVector(0.0f, 1.0f, 0.0f);
+glm::vec3 upVector(0.0f, 0.0f, -1.0f);
 glm::vec3 topVector(1.0f, 0.0f, 0.0f);
 glm::vec3 shipPosition;
 glm::vec3 shipCamEyePosition(0, 200, 500);
@@ -174,6 +174,19 @@ double currentTime;
 double lastTime;
 double timeInterval;
 bool idleTimerFlag = false;
+
+// Title name variables
+int timerIndex = 0;
+char titleStr[175];
+//char fpsStr[15];
+char baseStr[45] = "Warbird Simulator | ";
+//char warbirdMissleCount[14] = "| Warbird 9";
+//char unumMissleCount[11] = " | Unum 5";
+//char duoMissleCount[15] = " | Duo 5";
+char cameraStr[31] = "Current Camera : Front Camera ";
+//char * timerStr[4] = { " | U/S 200 ", " | U/S 25 ", " | U/S 10 ", " | U/S 2 " };
+//char winGameStr[29] = "Cadet passes flight training";
+//char loseGameStr[31] = "Cadet resigns from War College";
 
 //Vertex Buffer and Array Objects
 GLuint textIBO;
@@ -243,6 +256,19 @@ glm::vec3 squareRotationAxis[6] = {
 	glm::vec3(0.0f, 1.0f, 0.0f),
 	glm::vec3(0.0f, 1.0f, 0.0f)
 };
+
+// update and display animation state in window title
+void updateTitle()
+{
+	strcpy(titleStr, baseStr);
+	//strcat(titleStr, warbirdMissleCount);
+	//strcat(titleStr, unumMissleCount);
+	//strcat(titleStr, duoMissleCount);
+	//strcat(titleStr, timerStr[timerIndex]);
+	//strcat(titleStr, fpsStr);
+	strcat(titleStr, cameraStr);
+	glutSetWindowTitle(titleStr);
+}
 
 void init() {
 	//Load shader programs
@@ -359,6 +385,8 @@ void init() {
 
 	//get elapsed time
 	lastTime - glutGet(GLUT_ELAPSED_TIME);
+
+	updateTitle();
 }
 
 void reshape(int width, int height) {
@@ -511,12 +539,15 @@ void keyboard(unsigned char key, int x, int y) {
 		switchCamera(currentCamera);
 		break;
 	}
+	strcpy(cameraStr, "Current Camera : ");
+	strcat(cameraStr, cameraNames[currentCamera]);
+	updateTitle();
 }
 
 int main(int argc, char** argv) {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);	//Configure glut options
-	glutInitWindowSize(1024, 800);
+	glutInitWindowSize(800, 600);
 	glutInitContextVersion(3, 3);
 	glutInitContextProfile(GLUT_CORE_PROFILE);
 
