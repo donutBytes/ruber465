@@ -18,6 +18,5 @@
   GLM: GLM_GTC_type_ptr extension included
   GLM: GLM_GTX_norm extension included
   GLM: GLM_GTX_quaternion extension included
-c:\users\anna\documents\github\ruber465\ruber465\source.cpp(363): warning C4552: '-': operator has no effect; expected operator with side-effect
-  ruber465.vcxproj -> C:\Users\Anna\Documents\GitHub\ruber465\ruber465\Debug\ruber465.exe
-  ruber465.vcxproj -> C:\Users\Anna\Documents\GitHub\ruber465\ruber465\Debug\ruber465.pdb (Partial PDB)
+c:\users\anna\documents\github\ruber465\ruber465\source.cpp(104): error C2059: syntax error: '}'
+c:\users\anna\documents\github\ruber465\ruber465\source.cpp(104): error C2143: syntax error: missing ';' before '}'
