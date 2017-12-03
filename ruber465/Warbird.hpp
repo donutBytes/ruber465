@@ -6,18 +6,19 @@
 
 class Warbird : public MoveableObj3D {
 private:
-	int updateFrameCount;
 	float AORDirection;
-	glm::vec3 AOR;
+	//glm::vec3 AOR;
 	glm::vec3 direction;
+	glm::vec3 pitchVector;
+	glm::vec3 initialPosition; 
+	
 	glm::vec3 distance;
-	glm::vec3 missileVector;
-	glm::vec3 missileLocation;
-	glm::vec3 translationAmount;
+	
 	glm::mat4 targetMatrixLocation;
-	glm::quat quaternion;
+	//glm::quat quatrnion;
+
 public:
-	Warbird(float modelSize, float modelBoundingRadius);
+	Warbird(float modelSize, float modelBoundingRadius, glm::vec3 passedInitialPosition);
 	void update();
 	void setDirection(glm::vec3 passedInDirection);
 	glm::mat4 getTargetMatrixLocation();
@@ -25,8 +26,9 @@ public:
 	int getUpdateFrameCount();
 };
 
-Warbird::Warbird(float modelSize, float modelBoundingRadius) : MoveableObj3D(modelSize, modelBoundingRadius) {
-	updateFrameCount = 0;
+Warbird::Warbird(float modelSize, float modelBoundingRadius, glm::vec3 passedInitialPosition) : MoveableObj3D(modelSize, modelBoundingRadius) {
+	initialPosition = passedInitialPosition;
+	
 	AORDirection = 0;
 };
 
@@ -40,10 +42,6 @@ glm::mat4 Warbird::getTargetMatrixLocation() {
 
 glm::vec3 Warbird::getDirection() {
 	return direction;
-}
-
-int Warbird::getUpdateFrameCount() {
-	return updateFrameCount;
 }
 
 void Warbird::update() {

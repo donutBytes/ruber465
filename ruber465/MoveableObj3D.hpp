@@ -82,7 +82,7 @@ MoveableObj3D::MoveableObj3D(float modelSize, float modelBoundingRadius) {
 
 	identity = glm::mat4();		// initialize the identity matrix
 
-								// No initial rotation, orientation, or translation
+	// No initial rotation, orientation, or translation
 	rotationMatrix = identity;
 	orientationMatrix = identity;
 	translationMatrix = identity;
@@ -160,15 +160,19 @@ void MoveableObj3D::setPosition(glm::vec3 newPosition)
 // Updates the rotation and orientation matrix.
 void MoveableObj3D::update()
 {
-	rotationMatrix = glm::rotate(rotationMatrix, rotationAmount, rotationAxis);
+	rotationMatrix = glm::rotate(
+		rotationMatrix, 
+		rotationAmount, 
+		rotationAxis
+	);
 
 	// Set the orientation matrix based on what type of object it is:
-	if (orbit == true)
-	{
+	if (orbit == true) {
+		//printf("orbit: true\t");
 		orientationMatrix = rotationMatrix * translationMatrix;
 	}
-	else
-	{
+	else {
+		//printf("orbit: false\t");
 		orientationMatrix = translationMatrix * rotationMatrix;
 	}
 }
