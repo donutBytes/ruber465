@@ -90,10 +90,14 @@ glm::vec3 translatePosition[totalModels] = {
 	glm::vec3(9000, 0 , 0),			//duo
 	glm::vec3(11000, 0, 0),			//primus
 	glm::vec3(13000, 0, 0),			//secundus
-	glm::vec3(15000, 1000, 5000),	//warbird
+	glm::vec3(15000, 0, 0),			//warbird
 	glm::vec3(14500, 0, 0),			//missile
 	glm::vec3(14500, 0, 0)			//missile
 };
+
+// Planet rotational Variables
+glm::mat4 transformMatrix[totalModels];
+glm::mat4 identityMatrix(1.0f); // initialized identity matrix.
 
 float rotationAmount[totalModels] = {
 	0.0f,		// Ruber
@@ -101,7 +105,7 @@ float rotationAmount[totalModels] = {
 	0.002f,		// Duo
 	0.004f,		// Primus
 	0.002f,		// Secundus
-	0.02f,		// Warbird
+	0.0f,		// Warbird
 	0.0f,		// Missile
 	0.0f		// Missile
 };
@@ -111,30 +115,72 @@ glm::mat4 viewMatrix;					//set in init()
 glm::mat4 projectionMatrix;				//set in reshape()
 glm::mat4 ModelViewProjectionMatrix;	//set in display()
 
-// Cameras
-const int totalCameras = 2;
-char* cameraNames[totalCameras] = { "Front Camera", "Top Camera" };
-int currentCamera = 0;
+										// Cameras
+const int totalCameras = 5;
 
-// Planet rotational Variables
-glm::mat4 transformMatrix[totalModels];
-glm::mat4 identityMatrix(1.0f); // initialized identity matrix.
+const int FRONTCAMINDEX = 0;
+const int TOPCAMINDEX = 1;
+const int SHIPCAMINDEX = 2;
+const int UNUMCAMINDEX = 3;
+const int DUOCAMINDEX = 4;
+
+char* cameraNames[totalCameras] = {
+	"Front Camera",
+	"Top Camera",
+	"Ship Camera",
+	"Unum Camera",
+	"Duo Camera" };
+
+glm::mat4 camera;
 
 glm::mat4 frontCamera = glm::lookAt(
 	glm::vec3(0.0f, 10000.0f, 20000.0f),
 	glm::vec3(0.0f, 0.0f, 0.0f),
-	glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::vec3(0.0f, 1.0f, 0.0f)
+);
 
 glm::mat4 topCamera = glm::lookAt(
 	glm::vec3(0, 20000.0f, 0),
 	glm::vec3(0.0f, 0.0f, 0.0f),
-	glm::vec3(0.0f, 0.0f, -1.0f));;
+	glm::vec3(0.0f, 0.0f, -1.0f)
+);
+
+glm::mat4 shipCamera = glm::lookAt(
+	translatePosition[SHIPINDEX] + glm::vec3(0.0f, 300.0f, 1000.0f),
+	translatePosition[SHIPINDEX] + glm::vec3(0.0f, 300.0f, 0.0f),
+	glm::vec3(0.0f, 1.0f, 0.0f)
+);
+
+glm::vec3 unumEye = translatePosition[UNUMINDEX] + (-4000.0f, 0.0f, -4000.0f);
+glm::vec3 unumAt = translatePosition[UNUMINDEX];
+
+glm::mat4 unumCamera = glm::lookAt(
+	unumEye,
+	unumAt,
+	glm::vec3(0.0f, 1.0f, 0.0f)
+);
+
+glm::vec3 duoEye = translatePosition[DUOINDEX] + (-4000.0f, 0.0f, -4000.0f);
+glm::vec3 duoAt = translatePosition[DUOINDEX];
+
+glm::mat4 duoCamera = glm::lookAt(
+	duoEye,
+	duoAt,
+	glm::vec3(0.0f, 1.0f, 0.0f)
+);
 
 glm::mat4 cameras[totalCameras] =
 {
 	frontCamera,
-	topCamera
+	topCamera,
+	shipCamera,
+	unumCamera,
+	duoCamera
 };
+
+// Set the default camera to the front camera.
+
+int currentCamera = FRONTCAMINDEX;
 
 // window title strings
 char baseStr[50] = "Ruber: ";
@@ -170,8 +216,6 @@ void init() {
 	MVP = glGetUniformLocation(shaderProgram, "ModelViewProjection");
 	// ModelViewMatrix = glGetUniformLocation(shaderProgram, "ModelViewMatrix");
 	// NormalMatrix = glGetUniformLocation(shaderProgram, "NormalMatrix");
-
-	viewMatrix = cameras[currentCamera];
 
 	///set render state values
 	glEnable(GL_DEPTH_TEST);
@@ -211,24 +255,26 @@ void reshape(int width, int height) {
 void updateTitle() {
 	strcpy(titleStr, baseStr);
 	strcat(titleStr, viewStr);
-	
+
 	glutSetWindowTitle(titleStr);
 }
 
 void keyboard(unsigned char key, int x, int y) {
 	switch (key)
 	{
-		case 033: case 'q':  case 'Q': exit(EXIT_SUCCESS); break;
+	case 033: case 'q':  case 'Q':
+		exit(EXIT_SUCCESS);
+		break;
 
-		case 'v': case 'V':
-			currentCamera = ((currentCamera + 1) % totalCameras);
-			strcpy(viewStr, cameraNames[currentCamera]);
-			break;
+	case 'v': case 'V':
+		currentCamera = ((currentCamera + 1) % totalCameras);
+		strcpy(viewStr, cameraNames[currentCamera]);
+		break;
 
-		case 'x': case 'X':
-			currentCamera = ((currentCamera - 1) % totalCameras);
-			strcpy(viewStr, cameraNames[currentCamera]);
-			break;
+	case 'x': case 'X':
+		currentCamera = currentCamera==0 ? currentCamera = totalCameras-1 : ((currentCamera - 1) % totalCameras);
+		strcpy(viewStr, cameraNames[currentCamera]);
+		break;
 	}
 
 	updateTitle();
@@ -241,29 +287,32 @@ void display() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//Actually clears the window to color specified in glClearColor()
 														//associate shader variables with vertex arrayshere
 
-	viewMatrix = cameras[currentCamera];
-	
 	for (int i = 0; i < totalModels; i++)
 	{
 		switch (i)
 		{
 		case UNUMINDEX: // If it's planet Unum (planet closest to Ruber with no moons):
 			transformMatrix[i] = object3d[i]->getOrientationMatrix();
-
-			// Update Unum's Camera:
-			//unumCamera = glm::lookAt(getPosition(glm::translate(transformMatrix[index], planetCamEyePosition)), getPosition(transformMatrix[index]), upVector);
-			//if (currentCamera == UNUMCAMERAINDEX) // Update Unum's Camera:
-			//	mainCamera = unumCamera;
+			if (currentCamera == UNUMCAMINDEX)
+			{
+				cameras[UNUMCAMINDEX] = glm::lookAt(
+					getPosition(glm::translate(transformMatrix[i], unumEye)),
+					getPosition(transformMatrix[UNUMINDEX]),
+					glm::vec3(0.0f, 1.0f, 0.0f)
+				);
+			}
 			break;
 
 		case DUOINDEX: // If it's planet Duo (planest farthest from Ruber with moons Secundus and Primus):
-
 			transformMatrix[i] = object3d[i]->getOrientationMatrix();
-
-			// Update Duo's Camera:
-			//duoCamera = glm::lookAt(getPosition(glm::translate(transformMatrix[i], planetCamEyePosition)), getPosition(object3D[index]->getOrientationMatrix()), upVector);
-			//if (currentCamera == DUOCAMERAINDEX)
-			//	mainCamera = duoCamera;
+			if (currentCamera == DUOCAMINDEX)
+			{
+				cameras[DUOCAMINDEX] = glm::lookAt(
+					getPosition(glm::translate(transformMatrix[i], duoEye)),
+					getPosition(transformMatrix[DUOINDEX]),
+					glm::vec3(0.0f, 1.0f, 0.0f)
+				);
+			}
 			break;
 
 		case PRIMUSINDEX: // If its Primus, one of the moons, orbit around planet Duo.
@@ -297,6 +346,8 @@ void display() {
 			break;
 		}
 
+		viewMatrix = cameras[currentCamera];
+
 		ModelViewProjectionMatrix = projectionMatrix * cameras[currentCamera] * object3d[i]->getModelMatrix();
 		modelMatrix[i] = glm::translate(glm::mat4(), translatePosition[i]) * glm::scale(glm::mat4(), glm::vec3(scale[i]));
 		glUniformMatrix4fv(MVP, 1, GL_FALSE, glm::value_ptr(ModelViewProjectionMatrix));
@@ -304,19 +355,19 @@ void display() {
 		normalMatrix = glm::mat3(modelViewMatrix);
 		glUniformMatrix3fv(NormalMatrix, 1, GL_FALSE, glm::value_ptr(normalMatrix));
 		glUniformMatrix4fv(MVP, 1, GL_FALSE, glm::value_ptr(ModelViewProjectionMatrix));
-	
+
 
 		glBindVertexArray(VAO[i]);
 		glDrawArrays(GL_TRIANGLES, 0, vertexCount[i]);
 	}
-	
+
 	glutSwapBuffers();
 	updateTitle();
 }
 
 /* update */
 void update(int i) {
-	glutTimerFunc(40, update, 1);
+	glutTimerFunc(5, update, 1);
 
 	// Update all of the object3D's
 	for (int index = 0; index < totalModels; index++) {
