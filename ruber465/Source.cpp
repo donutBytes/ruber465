@@ -81,13 +81,10 @@ float modelSize[totalModels] = {
 
 glm::vec3 scale[totalModels];
 
-//Warbird
-Warbird * warbird;
-
 glm::vec3 translatePosition[totalModels] = {
 	glm::vec3(0, 0, 0),				//ruber
 	glm::vec3(4000, 0, 0),			//unum 
-	glm::vec3(9000, 0 , 0),			//duo
+	glm::vec3(9000, 0, 0),			//duo
 	glm::vec3(11000, 0, 0),			//primus
 	glm::vec3(13000, 0, 0),			//secundus
 	glm::vec3(15000, 0, 0),			//warbird
@@ -105,7 +102,7 @@ float rotationAmount[totalModels] = {
 	0.002f,		// Duo
 	0.004f,		// Primus
 	0.002f,		// Secundus
-	0.0f,		// Warbird
+	0.02f,		// Warbird
 	0.0f,		// Missile
 	0.0f		// Missile
 };
@@ -131,46 +128,43 @@ char* cameraNames[totalCameras] = {
 	"Unum Camera",
 	"Duo Camera" };
 
-glm::mat4 camera;
-
+// Setting Front camera
 glm::mat4 frontCamera = glm::lookAt(
 	glm::vec3(0.0f, 10000.0f, 20000.0f),
 	glm::vec3(0.0f, 0.0f, 0.0f),
 	glm::vec3(0.0f, 1.0f, 0.0f)
 );
-
+// Setting Top Camera
 glm::mat4 topCamera = glm::lookAt(
 	glm::vec3(0, 20000.0f, 0),
 	glm::vec3(0.0f, 0.0f, 0.0f),
 	glm::vec3(0.0f, 0.0f, -1.0f)
 );
-
+// Setting Ship Camera
 glm::mat4 shipCamera = glm::lookAt(
 	translatePosition[SHIPINDEX] + glm::vec3(0.0f, 300.0f, 1000.0f),
 	translatePosition[SHIPINDEX] + glm::vec3(0.0f, 300.0f, 0.0f),
 	glm::vec3(0.0f, 1.0f, 0.0f)
 );
-
+// Seeting Unum Camera
 glm::vec3 unumEye = translatePosition[UNUMINDEX] + (-4000.0f, 0.0f, -4000.0f);
 glm::vec3 unumAt = translatePosition[UNUMINDEX];
-
 glm::mat4 unumCamera = glm::lookAt(
 	unumEye,
 	unumAt,
 	glm::vec3(0.0f, 1.0f, 0.0f)
 );
-
+// Setting Duo Camera
 glm::vec3 duoEye = translatePosition[DUOINDEX] + (-4000.0f, 0.0f, -4000.0f);
 glm::vec3 duoAt = translatePosition[DUOINDEX];
-
 glm::mat4 duoCamera = glm::lookAt(
 	duoEye,
 	duoAt,
 	glm::vec3(0.0f, 1.0f, 0.0f)
 );
 
-glm::mat4 cameras[totalCameras] =
-{
+// Create an array of cameras to iterate through
+glm::mat4 cameras[totalCameras] = {
 	frontCamera,
 	topCamera,
 	shipCamera,
@@ -179,12 +173,40 @@ glm::mat4 cameras[totalCameras] =
 };
 
 // Set the default camera to the front camera.
-
 int currentCamera = FRONTCAMINDEX;
 
+// Warbird variables
+Warbird * warbird;
+int shipSpeedState = 0;
+int totalSpeeds = 3;
+float shipSpeed[3] = {10.0f, 50.0f, 200.0f};
+glm::mat4 shipOrientationMatrix;
+glm::vec3 shipUp(0.0f, 1.0f, 0.0f);
+glm::vec3 shipRight(1.0f, 0.0f, 0.0f);
+glm::vec3 shipLookingAt(0.0f, 0.0f, -1.0f);
+
+glm::vec3 upVector(0.0f, 1.0f, 0.0f);
+glm::vec3 topVector(1.0f, 0.0f, 0.0f);
+glm::vec3 shipPosition;
+glm::vec3 shipCamEyePosition(0, 200, 500);
+glm::vec3 planetCamEyePosition(0, 0.0f, -8000);
+glm::vec3 topCamEyePosition(0, 20000.0f, 0);
+glm::vec3 frontCamEyePosition(0.0f, 10000.0f, 20000.0f);
+glm::vec3 camPosition;
+
 // window title strings
+int timerIndex = 0;
+double currentTime, lastTime, timeInterval;
+int frameCount = 0;
+
 char baseStr[50] = "Ruber: ";
-char viewStr[15] = "Front Camera";
+// char warbirdMissleCount[14] = "| Warbird 9";
+// char unumMissleCount[11] = " | Unum 5";
+//char duoMissleCount[15] = " | Duo 5";
+char * timerStr[4] = { " | U/S 200 ", " | U/S 25 ", " | U/S 10 ", " | U/S 2 " };
+char fpsStr[15];
+char viewStr[30] = "| View: Front Camera";
+
 char titleStr[100];
 
 // Variables for shader
@@ -196,15 +218,15 @@ GLuint ModelViewMatrix;
 
 /* init */
 void init() {
-	//Load shader programs
+	// Load shader programs
 	shaderProgram = loadShaders(vertexShaderFile, fragmentShaderFile);
 	glUseProgram(shaderProgram);
 
-	//Generate VAOs and VBOs
+	// Generate VAOs and VBOs
 	glGenVertexArrays(totalModels, VAO);
 	glGenBuffers(totalModels, buffer);
 
-	///Load the buffers from the model files
+	// Load the buffers from the model files
 	for (int i = 0; i < totalModels; i++) {
 		modelBR[i] = loadModelBuffer(modelFile[i], vertexCount[i], VAO[i], buffer[i], shaderProgram,
 			vPosition[i], vColor[i], vNormal[i], "vPosition", "vColor", "vNormal");
@@ -217,23 +239,23 @@ void init() {
 	// ModelViewMatrix = glGetUniformLocation(shaderProgram, "ModelViewMatrix");
 	// NormalMatrix = glGetUniformLocation(shaderProgram, "NormalMatrix");
 
-	///set render state values
+	// set render state values
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.7f, 0.7f, 0.7f, 1.0f);
 
-	/// Create and set all the 3D objects:
+	// Create and set all the 3D objects:
 	for (int i = 0; i < totalModels; i++)
 	{
 		object3d[i] = new MoveableObj3D(modelSize[i], modelBR[i]);
 		object3d[i]->setTranslationMatrix(translatePosition[i]);
 		object3d[i]->setRotationAmount(rotationAmount[i]);
 
-		/// Set the planet flags:
+		// Set the planet flags:
 		if (i == UNUMINDEX || i == DUOINDEX)
 			object3d[i]->setOrbit();
 	}
 
-	/// Create the warbird:
+	// Create the warbird:
 	warbird = new Warbird(modelSize[SHIPINDEX], modelBR[SHIPINDEX], translatePosition[SHIPINDEX]);
 	warbird->setTranslationMatrix(translatePosition[SHIPINDEX]);
 	warbird->setRotationAmount(rotationAmount[SHIPINDEX]);
@@ -247,103 +269,177 @@ void reshape(int width, int height) {
 
 	glViewport(0, 0, width, height);
 	projectionMatrix = glm::perspective(FOVY, aspectRatio, 1.0f, 100000.0f);
-	printf("reshape: FOVY = %5.2f, width = %4d height = %4d aspect = %5.2f \n",
-		FOVY, width, height, aspectRatio);
 }
 
 // update and display animation state in window title
 void updateTitle() {
 	strcpy(titleStr, baseStr);
+	// strcat(titleStr, warbirdMissleCount);
+	// strcat(titleStr, unumMissleCount);
+	// strcat(titleStr, duoMissleCount);
+	strcat(titleStr, timerStr[timerIndex]);
+	strcat(titleStr, fpsStr);
+
 	strcat(titleStr, viewStr);
 
 	glutSetWindowTitle(titleStr);
 }
 
+/* Handles button presses */
 void keyboard(unsigned char key, int x, int y) {
-	switch (key)
-	{
-	case 033: case 'q':  case 'Q':
-		exit(EXIT_SUCCESS);
-		break;
+	switch (key) {
+		case 033: case 'q':  case 'Q':
+			exit(EXIT_SUCCESS);
+			break;
 
-	case 'v': case 'V':
-		currentCamera = ((currentCamera + 1) % totalCameras);
-		strcpy(viewStr, cameraNames[currentCamera]);
-		break;
+		case 'v': case 'V':
+			currentCamera = ((currentCamera + 1) % totalCameras);
+			strcpy(viewStr, cameraNames[currentCamera]);
+			break;
 
-	case 'x': case 'X':
-		currentCamera = currentCamera==0 ? currentCamera = totalCameras-1 : ((currentCamera - 1) % totalCameras);
-		strcpy(viewStr, cameraNames[currentCamera]);
-		break;
+		case 'x': case 'X':
+			currentCamera = currentCamera==0 ? currentCamera = totalCameras-1 : ((currentCamera - 1) % totalCameras);
+			strcpy(viewStr, cameraNames[currentCamera]);
+			break;
+
+		case 's': case 'S':
+			shipSpeedState = (shipSpeedState + 1) % totalSpeeds;
+			warbird->setSpeed(shipSpeed[shipSpeedState]);
+			break;
 	}
 
 	updateTitle();
 }
 
+/* Handles Warbird controls */
+void handleSpecialKeypress(int key, int x, int y)
+{
+	printf("%i", key);
+	switch(key) {
+		case GLUT_KEY_UP:
+		//if (key == GLUT_KEY_UP) {
+			if (glutGetModifiers() == GLUT_ACTIVE_CTRL) {
+				warbird->setPitch(1);
+			}
+			else {
+				warbird->setMove(-1);
+			}
+			break;
+		//}
+		case GLUT_KEY_DOWN:
+		//if (key == GLUT_KEY_DOWN) {
+			if (glutGetModifiers() == GLUT_ACTIVE_CTRL) {
+				warbird->setPitch(-1);
+			}
+			else {
+				warbird->setMove(1);
+			}
+			break;
+		//}
+		case GLUT_KEY_LEFT:
+		//if (key == GLUT_KEY_LEFT) {
+			if (glutGetModifiers() == GLUT_ACTIVE_CTRL) {
+				warbird->setRoll(1);
+			}
+			else {
+				warbird->setYaw(1);
+			}
+			break;
+		//}
+		case GLUT_KEY_RIGHT:
+		//if (key == GLUT_KEY_RIGHT) {
+			if (glutGetModifiers() == GLUT_ACTIVE_CTRL) {
+				warbird->setRoll(-1);
+			}
+			else {
+				warbird->setYaw(-1);
+			}
+			break;
+		//}
+	}
+}
+
 /* display */
-
 void display() {
-	//printf("display\t");
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//Actually clears the window to color specified in glClearColor()
-														//associate shader variables with vertex arrayshere
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
 
-	for (int i = 0; i < totalModels; i++)
-	{
-		switch (i)
-		{
-		case UNUMINDEX: // If it's planet Unum (planet closest to Ruber with no moons):
-			transformMatrix[i] = object3d[i]->getOrientationMatrix();
-			if (currentCamera == UNUMCAMINDEX)
-			{
-				cameras[UNUMCAMINDEX] = glm::lookAt(
-					getPosition(glm::translate(transformMatrix[i], unumEye)),
-					getPosition(transformMatrix[UNUMINDEX]),
-					glm::vec3(0.0f, 1.0f, 0.0f)
-				);
-			}
-			break;
+	for (int i = 0; i < totalModels; i++) {
+		switch (i){
+			case UNUMINDEX: // If it's planet Unum (planet closest to Ruber with no moons):
+				transformMatrix[i] = object3d[i]->getOrientationMatrix();
+				if (currentCamera == UNUMCAMINDEX)
+				{
+					cameras[UNUMCAMINDEX] = glm::lookAt(
+						getPosition(glm::translate(transformMatrix[i], unumEye)),
+						getPosition(transformMatrix[UNUMINDEX]),
+						glm::vec3(0.0f, 1.0f, 0.0f)
+					);
+				}
 
-		case DUOINDEX: // If it's planet Duo (planest farthest from Ruber with moons Secundus and Primus):
-			transformMatrix[i] = object3d[i]->getOrientationMatrix();
-			if (currentCamera == DUOCAMINDEX)
-			{
-				cameras[DUOCAMINDEX] = glm::lookAt(
-					getPosition(glm::translate(transformMatrix[i], duoEye)),
-					getPosition(transformMatrix[DUOINDEX]),
-					glm::vec3(0.0f, 1.0f, 0.0f)
-				);
-			}
-			break;
+				break;
 
-		case PRIMUSINDEX: // If its Primus, one of the moons, orbit around planet Duo.
-			transformMatrix[i] =
-				transformMatrix[DUOINDEX] *
-				object3d[i]->getRotationMatrix() *
-				glm::translate(
-					identityMatrix,
-					(translatePosition[i] - translatePosition[DUOINDEX])
-				);
-			object3d[i]->setOrientationMatrix(transformMatrix[i]);
+			case DUOINDEX: // If it's planet Duo (planest farthest from Ruber with moons Secundus and Primus):
+				transformMatrix[i] = object3d[i]->getOrientationMatrix();
+				if (currentCamera == DUOCAMINDEX)
+				{
+					cameras[DUOCAMINDEX] = glm::lookAt(
+						getPosition(glm::translate(transformMatrix[i], duoEye)),
+						getPosition(transformMatrix[DUOINDEX]),
+						glm::vec3(0.0f, 1.0f, 0.0f)
+					);
+				}
 
-			// For Debugging:
-			//showMat4("rotation", moonRotationMatrix);
-			showMat4("transform", transformMatrix[i]);
-			break;
+				break;
 
-		case SECUNDUSINDEX: // If its Secundus, one of the moons, orbit around planet Duo.
-			transformMatrix[SECUNDUSINDEX] =
-				transformMatrix[DUOINDEX] *
-				object3d[i]->getRotationMatrix() *
-				glm::translate(
-					identityMatrix,
-					(translatePosition[SECUNDUSINDEX] - translatePosition[DUOINDEX])
-				);
-			object3d[i]->setOrientationMatrix(transformMatrix[i]);
+			case PRIMUSINDEX: // If its Primus, one of the moons, orbit around planet Duo.
+				transformMatrix[i] =
+					transformMatrix[DUOINDEX] *
+					object3d[i]->getRotationMatrix() *
+					glm::translate(
+						identityMatrix,
+						(translatePosition[i] - translatePosition[DUOINDEX])
+					);
+				object3d[i]->setOrientationMatrix(transformMatrix[i]);
 
-			break;
 
-		default:
-			break;
+				break;
+
+			case SECUNDUSINDEX: // If its Secundus, one of the moons, orbit around planet Duo.
+				transformMatrix[SECUNDUSINDEX] =
+					transformMatrix[DUOINDEX] *
+					object3d[i]->getRotationMatrix() *
+					glm::translate(
+						identityMatrix,
+						(translatePosition[SECUNDUSINDEX] - translatePosition[DUOINDEX])
+					);
+				object3d[i]->setOrientationMatrix(transformMatrix[i]);
+
+				break;
+
+			case SHIPINDEX:
+				object3d[SHIPINDEX]->setTranslationMatrix(warbird->getTranslationMatrix());
+				object3d[SHIPINDEX]->setRotationMatrix(warbird->getRotationMatrix());
+				object3d[SHIPINDEX]->setRotationAmount(warbird->getRotationAmount());
+				object3d[SHIPINDEX]->setOrientationMatrix(warbird->getOrientationMatrix());
+
+				//transformMatrix[i] = object3d[i]->getOrientationMatrix();
+
+				modelMatrix[i] = object3d[i]->getModelMatrix();
+				shipOrientationMatrix = object3d[i]->getOrientationMatrix();
+
+				// Update Ship's Camera:
+				shipPosition = getPosition(shipOrientationMatrix);
+				if (currentCamera == SHIPCAMINDEX) 
+					cameras[SHIPCAMINDEX] = glm::lookAt(
+						getPosition(glm::translate(object3d[i]->getModelMatrix(), shipCamEyePosition)),
+						glm::vec3(shipPosition.x, shipPosition.y, shipPosition.z),
+						upVector
+					);
+				
+				break;
+
+			default:
+				break;
 		}
 
 		viewMatrix = cameras[currentCamera];
@@ -362,6 +458,18 @@ void display() {
 	}
 
 	glutSwapBuffers();
+
+	frameCount++;
+
+	currentTime = glutGet(GLUT_ELAPSED_TIME);  // get elapsed system time
+	timeInterval = currentTime - lastTime;
+	if (timeInterval >= 1000)
+	{
+		sprintf(fpsStr, "| F/S %4d ", (int)(frameCount / (timeInterval / 1000.0f)));
+		lastTime = currentTime;
+		frameCount = 0;
+	}
+
 	updateTitle();
 }
 
@@ -369,10 +477,9 @@ void display() {
 void update(int i) {
 	glutTimerFunc(5, update, 1);
 
-	// Update all of the object3D's
+	// Update all of the objects in the scene
 	for (int index = 0; index < totalModels; index++) {
 		object3d[index]->update();
-		//printf("rotation: %f\n", object3d[index]->getRotationAmount());
 	}
 
 	// Update the warbird object
@@ -405,6 +512,7 @@ int main(int argc, char** argv) {
 	glutDisplayFunc(display); //continuously called for interacting with the window
 	glutReshapeFunc(reshape);
 	glutKeyboardFunc(keyboard);
+	glutSpecialFunc(handleSpecialKeypress);
 
 	glutIdleFunc(NULL);
 	glutTimerFunc(5, update, 1);
