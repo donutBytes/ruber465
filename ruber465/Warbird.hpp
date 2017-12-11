@@ -8,7 +8,6 @@ class Warbird : public MoveableObj3D
 {
 
 private:
-	float AORDirection;
 	glm::vec3 distance;
 	glm::vec3 pitchVector;
 	glm::vec3 initialPosition; 
@@ -20,68 +19,51 @@ private:
 
 	bool alive;
 
-
 public:
 	Warbird(float modelSize, float modelBoundingRadius, glm::vec3 passedInitialPosition) : MoveableObj3D(modelSize, modelBoundingRadius) {
 		initialPosition = passedInitialPosition;
-
 		speed = 10.0f;
-		step = 0;
-		pitch = 0;
-		roll = 0;
-		yaw = 0;
-
+		step = 0 , pitch = 0, roll = 0, yaw = 0;
 		alive = true;
 	};
 
 	bool isAlive() {
 		return alive;
 	}
-
-	void setSpeed(float newSpeed) {
-		speed = newSpeed;
-	}
-
-	float getSpeed() {
-		return speed;
-	}
-
-	void setMove(int value) {
-		step = value;
-		printf("move:%i\n", step);
-	}
-
-	void setPitch(int newPitch) {
-		pitch = newPitch;
-		printf("pitch:%i\t", pitch);
-	}
-
-	void setRoll(int newRoll) {
-		roll = newRoll;
-		printf("roll:%i\t", roll);
-	}
-
-	void setYaw(int newYaw) {
-		yaw = newYaw;
-		printf("yaw:%i\t", yaw);
-	}
-
 	void destroy() {
 		orientationMatrix = identity;
 		alive = false;
 		printf("The warbird is dead. \n");
 	}
 
+	float getSpeed() {
+		return speed;
+	}
+	void setSpeed(float newSpeed) {
+		speed = newSpeed;
+	}
 
-	void restart() {
-		alive = true;
-		translationMatrix = glm::translate(identity, initialPosition);
-		rotationMatrix = glm::rotate(identity, 0.0f, glm::vec3(0, 1, 0));
+	// Setting rotation variables
+	void setMove(int stepSize) {
+		step = stepSize;
+		printf("move:%i\n", step);
+	}
+	void setPitch(int newPitch) {
+		pitch = newPitch;
+		printf("pitch:%i\t", pitch);
+	}
+	void setRoll(int newRoll) {
+		roll = newRoll;
+		printf("roll:%i\t", roll);
+	}
+	void setYaw(int newYaw) {
+		yaw = newYaw;
+		printf("yaw:%i\t", yaw);
 	}
 
 	void update() {
-		if (!alive) {
-			printf("dead");
+		if(!alive) {
+			printf("ded");
 			return;
 		}
 
@@ -89,19 +71,17 @@ public:
 
 		rotationAxis = glm::vec3(pitch, yaw, roll);
 
-		if (pitch != 0 || yaw != 0 || roll != 0) {
+		if(pitch != 0 || yaw != 0 || roll != 0) {
 			printf("%i\t", pitch);
 			printf("%i\t", yaw);
 			printf("%i\t", roll);
 			printf("\n");
 			rotationMatrix = glm::rotate(rotationMatrix, rotationAmount, rotationAxis);
-			// showMat4("transform", transformMatrix[i]);
 		}
 
 		setTranslationMatrix(distance);
 
 		orientationMatrix = translationMatrix * rotationMatrix;
-		//orientationMatrix = rotationMatrix * translationMatrix;
 
 		step = pitch = yaw = roll = 0;
 	}
